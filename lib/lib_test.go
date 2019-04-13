@@ -43,12 +43,24 @@ func TestReadFile(t *testing.T) {
 func TestGet(t *testing.T) {
 	file := "../fixtures/list_of_urls"
 	records, _ := ReadFile(file)
+
+	n := InitNT()
+
 	for _, record := range records {
-		_, err := Get(record)
+		_, err := n.Get(record)
 		if err != nil {
 			t.Fatalf("Can't make url call")
 		}
 	}
 
-	Process(records)
+	n.Process(records)
+}
+
+func TestMax(t *testing.T) {
+	r := []string{"https://aipiggybot.io"}
+	for i := 0; i < 10; i++ {
+		r = append(r, "https://aipiggybot.io")
+	}
+	n := InitNT()
+	n.Process(r)
 }

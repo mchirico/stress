@@ -73,40 +73,52 @@ func NewTransportBindedToIP(ip string) (*http.Transport, error) {
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			LocalAddr: &net.TCPAddr{IP: ipAddr.IP},
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
+			Timeout:   3 * time.Second,
+			KeepAlive: 3 * time.Second,
 			DualStack: true,
 		}).DialContext,
 		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
+		IdleConnTimeout:       9 * time.Second,
+		TLSHandshakeTimeout:   4 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
 	return trans, nil
 }
 
-func Get(url string) ([]byte, error) {
+type NetworkTransport struct {
+	n *http.Transport
+	c *http.Client
+}
 
+func InitNT() NetworkTransport {
+	n := NetworkTransport{}
 	var netTransport = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
+			Timeout:   5 * time.Second,
+			KeepAlive: 5 * time.Second,
 		}).DialContext,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
+		MaxIdleConns:          10,
+		IdleConnTimeout:       4 * time.Second,
+		TLSHandshakeTimeout:   4 * time.Second,
+		ExpectContinueTimeout: 4 * time.Second,
 	}
 
 	var netClient = &http.Client{
-		Timeout:   time.Second * 10,
+		Timeout:   time.Second * 1,
 		Transport: netTransport,
 	}
 
-	resp, err := netClient.Get(url)
+	n.n = netTransport
+	n.c = netClient
+	return n
 
+}
+
+func (n *NetworkTransport) Get(url string) ([]byte, error) {
+
+	resp, err := n.c.Get(url)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -120,23 +132,14 @@ func Get(url string) ([]byte, error) {
 
 }
 
-func ReadFile(file string) ([]string, error) {
-	dat, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
-	records := strings.Split(string(dat), "\n")
-	return records, err
-}
-
-func Process(records []string) {
+func (n *NetworkTransport) Process(records []string) {
 
 	var wg sync.WaitGroup
 	for i, record := range records {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
-			output, err := Get(url)
+			output, err := n.Get(url)
 			if err != nil {
 				fmt.Println(string(output), err)
 			}
@@ -146,4 +149,13 @@ func Process(records []string) {
 	}
 	wg.Wait()
 
+}
+
+func ReadFile(file string) ([]string, error) {
+	dat, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	records := strings.Split(string(dat), "\n")
+	return records, err
 }
