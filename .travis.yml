@@ -18,6 +18,7 @@ matrix:
         - go get github.com/spf13/cobra
         - go get github.com/mitchellh/go-homedir
         - go get github.com/spf13/viper
+        - go get golang.org/x/net/proxy	
       before_install:
         #- openssl aes-256-cbc -k "$super_secret_password" -in fixtures/data.enc -out fixtures/data -d
         #- for i in $(ls fixtures/fixtures_*.enc); do openssl aes-256-cbc -k "$super_secret_password" -in ${i} -out ${i%%.*} -d; done
